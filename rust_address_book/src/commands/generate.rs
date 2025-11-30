@@ -21,7 +21,7 @@ pub enum GenerateCommands {
 }
 
 
-pub fn execute(args: GenerateArgs) -> Result<()> {
+pub fn execute_generate(args: GenerateArgs) -> Result<()> {
     match args.command {
         GenerateCommands::Addresses { count } => {
             info!("generating addresses with count {}", count);

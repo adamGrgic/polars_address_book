@@ -3,13 +3,11 @@ use clap::{Parser, Subcommand};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing::info;
 
-
-
 mod commands;
 
 use commands::{
-    execute_generate,
-    GenerateArgs,
+    generate::{execute_generate, GenerateArgs},
+    database::{handle_db_command, DatabaseArgs},
 };
 
 #[derive(Parser)]
@@ -22,14 +20,14 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Start the admin daemon server
+    /// Generate list of addresses
     Generate(GenerateArgs),
-
+    /// Database management commands
+    Database(DatabaseArgs),
 }
 
-
-
-fn main() -> Result<()>{
+#[tokio::main]
+async fn main() -> Result<()>{
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -38,17 +36,18 @@ fn main() -> Result<()>{
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-
-    // let args = Args::parse();
     let cli = Cli::parse();
 
     match cli.command {
-         Commands::Generate(args) => {
+        Commands::Generate(args) => {
             info!("generate was chosen");
             let result = execute_generate(args);
-
             info!("result: {:?}", result);
-
+        }
+        Commands::Database(args) => {
+            if let Err(e) = handle_db_command(args).await {
+                eprintln!("Error executing database command: {}", e);
+            }
         }
     }
     Ok(())
