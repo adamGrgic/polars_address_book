@@ -1,22 +1,55 @@
-use chrono::prelude::*;
-use polars::prelude::*;
+use anyhow::Result;
+use clap::{Parser, Subcommand};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing::info;
 
 
 
-fn main() {
-    println!("Hello, world!");
-    let mut df: DataFrame = df!(
-    "name" => ["Alice Archer", "Ben Brown", "Chloe Cooper", "Daniel Donovan"],
-    "birthdate" => [
-        NaiveDate::from_ymd_opt(1997, 1, 10).unwrap(),
-        NaiveDate::from_ymd_opt(1985, 2, 15).unwrap(),
-        NaiveDate::from_ymd_opt(1983, 3, 22).unwrap(),
-        NaiveDate::from_ymd_opt(1981, 4, 30).unwrap(),
-    ],
-    "weight" => [57.9, 72.5, 53.6, 83.1],  // (kg)
-    "height" => [1.56, 1.77, 1.65, 1.75],  // (m)
-    )
-    .unwrap();
-    println!("{df}");
+mod commands;
 
+use commands::{
+    execute_generate,
+    GenerateArgs,
+};
+
+#[derive(Parser)]
+#[command(name = "address-book")]
+#[command(about = "Rust Polars Address Book", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Start the admin daemon server
+    Generate(GenerateArgs),
+
+}
+
+
+
+fn main() -> Result<()>{
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "rust_address_book=info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+
+    // let args = Args::parse();
+    let cli = Cli::parse();
+
+    match cli.command {
+         Commands::Generate(args) => {
+            info!("generate was chosen");
+            let result = execute_generate(args);
+
+            info!("result: {:?}", result);
+
+        }
+    }
+    Ok(())
 }
