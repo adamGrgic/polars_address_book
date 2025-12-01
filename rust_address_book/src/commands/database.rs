@@ -40,13 +40,13 @@ pub async fn handle_db_command(db_args: DatabaseArgs) -> anyhow::Result<()> {
             // e.g., DATABASE_URL="postgres://postgres:password@localhost/postgres"
             let db_url = std::env::var("DATABASE_URL")
                 .map_err(|_| anyhow::anyhow!("DATABASE_URL must be set in .env to connect as a superuser."))?;
-            
+
             let mut conn = PgConnection::connect(&db_url).await?;
-            
+
             // Create the new user
             conn.execute(
                 format!(
-                    "CREATE USER {} WITH PASSWORD '{}'",
+                    "CREATE USER IF NOT EXIST {} WITH PASSWORD '{}'",
                     args.db_user, password
                 )
                 .as_str(),
